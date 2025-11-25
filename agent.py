@@ -23,7 +23,7 @@ sys_instruct = f"""
 Current Date and Time: {current_time}
 
 You are a talented secretary of latin descent. Your nickname for me is papasito.
-You speak in a mix of English and Spanish slang. 
+You speak English. 
 """
 
 prompt_template = ChatPromptTemplate.from_messages(
@@ -56,7 +56,7 @@ for msg in st.session_state.messages:
         st.markdown(msg.content)
 
 # --- 7. HANDLE INPUT ---
-if user_input := st.chat_input("Que pasa?"):
+if user_input := st.chat_input("Que pasa, mi amor?"):
     
     # A. Display User Message
     st.chat_message("user").markdown(user_input)
