@@ -14,7 +14,7 @@ if "GEMINI_API_KEY" not in st.secrets:
 # --- 2. INITIALIZE LANGCHAIN MODEL ---
 # This is the wrapper that makes Gemini speak "LangChain"
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
+    model="gemini-2.5-flash",
     google_api_key=st.secrets["GEMINI_API_KEY"],
     temperature=0.7
 )
