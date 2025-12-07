@@ -1,8 +1,9 @@
 import streamlit as st
 from langchain_groq import ChatGroq
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import Tool
-from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage
 
 class AgentFactory:
     def __init__(self, model_name="meta-llama/llama-4-maverick-17b-128e-instruct", temperature=0.7):
@@ -15,32 +16,37 @@ class AgentFactory:
 
     def create_agent(self, name: str, system_prompt: str, tools: list):
         """
-        Creates a LangGraph ReAct Agent (The modern standard for v1.1.2).
+        Creates a Tool Calling Agent (No LangGraph, uses AgentExecutor).
         """
-        # In LangGraph, we pass the system prompt as a 'state_modifier'
-        # This prepends the system instructions to the message history.
-        return create_react_agent(
-            model=self.llm,
-            tools=tools,
-            state_modifier=f"You are {name}. {system_prompt}"
-        )
+        # 1. Define the Prompt
+        # We must include placeholders for the tool agent to work
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", f"You are {name}. {system_prompt}"),
+            MessagesPlaceholder(variable_name="messages"),
+            ("placeholder", "{agent_scratchpad}"), 
+        ])
+
+        # 2. Construct the Agent
+        agent = create_tool_calling_agent(self.llm, tools, prompt)
+
+        # 3. Create the Executor (The Runtime)
+        return AgentExecutor(agent=agent, tools=tools, verbose=True)
 
     def create_agent_as_tool(self, name: str, system_prompt: str, tools: list, description: str):
         """
         Wraps a sub-agent as a tool for the root agent.
         """
-        # Create the graph for the sub-agent
-        agent_graph = self.create_agent(name, system_prompt, tools)
+        agent_executor = self.create_agent(name, system_prompt, tools)
         
         def run_agent(query: str):
-            # LangGraph inputs are just a dictionary of messages
-            inputs = {"messages": [HumanMessage(content=query)]}
-            
-            # invoke() returns a dictionary of the final state (all messages)
-            result = agent_graph.invoke(inputs)
-            
-            # The last message in the state is the AI's final answer
-            return result["messages"][-1].content
+            # The executor expects a dictionary with "messages"
+            # It returns a dictionary with "output"
+            try:
+                # We wrap the string query in a HumanMessage
+                response = agent_executor.invoke({"messages": [HumanMessage(content=query)]})
+                return response.get("output", "No response generated.")
+            except Exception as e:
+                return f"Error running {name}: {e}"
 
         return Tool(
             name=name,
