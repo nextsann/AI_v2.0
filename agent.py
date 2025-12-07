@@ -22,14 +22,19 @@ factory = AgentFactory()
 # --- 3. CREATE SPECIALIST AGENTS ---
 # A. Research Specialist
 research_tool = get_search_tool()
-research_agent_tool = factory.create_agent_as_tool(
-    name="Research_Specialist",
-    system_prompt="""You are a focused web researcher. 
-    You search for accurate data using Tavily and summarize it concisely. 
-    Always provide the source URL if possible.""",
-    tools=[research_tool],
-    description="Use this agent to search the internet for news, facts, sports scores, or current events."
-)
+# Safe check: Only create the agent if the tool exists
+if research_tool:
+    research_agent_tool = factory.create_agent_as_tool(
+        name="Research_Specialist",
+        system_prompt="""You are a focused web researcher. 
+        You search for accurate data using Tavily and summarize it concisely. 
+        Always provide the source URL if possible.""",
+        tools=[research_tool],
+        description="Use this agent to search the internet for news, facts, sports scores, or current events."
+    )
+else:
+    # Fallback if Tavily key is missing
+    research_agent_tool = None 
 
 # B. Calendar Specialist
 calendar_agent_tool = factory.create_agent_as_tool(
@@ -43,8 +48,9 @@ calendar_agent_tool = factory.create_agent_as_tool(
 )
 
 # --- 4. CREATE ROOT AGENT (MIMI) ---
-# Mimi gets the AGENTS as her tools, not the raw functions
-root_tools = [research_agent_tool, calendar_agent_tool]
+# Mimi gets the AGENTS as her tools
+# We filter out None in case Research tool failed
+root_tools = [t for t in [research_agent_tool, calendar_agent_tool] if t is not None]
 
 # Time logic for Mimi
 london_tz = pytz.timezone('Europe/London')
@@ -77,7 +83,7 @@ for msg in st.session_state.messages:
         role = "user" if isinstance(msg, HumanMessage) else "assistant"
         st.chat_message(role).write(msg.content)
 
-if user_input := st.chat_input("Que pasa?"):
+if user_input := st.chat_input("Hello there"):
     st.chat_message("user").write(user_input)
     st.session_state.messages.append(HumanMessage(content=user_input))
 
@@ -87,6 +93,9 @@ if user_input := st.chat_input("Que pasa?"):
             response = mimi_executor.invoke({"messages": st.session_state.messages})
             status.update(label="Complete", state="complete", expanded=False)
             
-        st.markdown(response["output"])
+        # New way: Grab the LAST message content from the list
+        final_answer = response["messages"][-1].content
+        
+        st.markdown(final_answer)
     
-    st.session_state.messages.append(AIMessage(content=response["output"]))
+    st.session_state.messages.append(AIMessage(content=final_answer))
