@@ -1,14 +1,16 @@
 from langchain.agents import create_agent
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.tools import Tool
 from langchain_core.messages import HumanMessage
 
 class AgentFactory:
     def __init__(self, model_name="gemini-2.5-flash", temperature=0.7):
-        self.llm = ChatGoogleGenerativeAI(
-            model=model_name,
-            temperature=temperature
-        )
+        self.llm = ChatGroq(
+        model="meta-llama/llama-4-maverick-17b-128e-instruct", 
+        api_key=st.secrets["GROQ_API_KEY"],
+        temperature=0.7,
+        max_tokens=4096 # Safety limit
+)
 
     def create_agent(self, name: str, system_prompt: str, tools: list):
         """

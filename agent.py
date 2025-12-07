@@ -12,10 +12,10 @@ st.set_page_config(page_title="Mimi - Enterprise", page_icon="💃")
 st.title("Mimi (Hierarchical Architecture)")
 
 # Check Secrets
-if "GEMINI_API_KEY" not in st.secrets:
-    st.error("⚠️ API Key missing.")
+if "GROQ_API_KEY" not in st.secrets:
+    st.error("⚠️ Groq API Key missing. Please add it to secrets.toml")
     st.stop()
-
+    
 # --- 2. INITIALIZE FACTORY ---
 factory = AgentFactory()
 
