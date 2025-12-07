@@ -1,4 +1,9 @@
 streamlit
-langchain
+langchain>=0.1.0
+langchain-core
 langchain-google-genai
 langchain-community
+tavily-python
+google-api-python-client
+google-auth-oauthlib
+pytz
