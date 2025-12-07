@@ -1,7 +1,6 @@
 import streamlit as st
 from langchain_groq import ChatGroq
-from langchain.agents import AgentExecutor, create_tool_calling_agent
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.agents import create_agent
 from langchain_core.tools import Tool
 from langchain_core.messages import HumanMessage
 
@@ -16,43 +15,33 @@ class AgentFactory:
 
     def create_agent(self, name: str, system_prompt: str, tools: list):
         """
-        Creates a Tool Calling Agent (Standard for Llama 3/4).
+        Creates a v1 Agent. 
+        In LangChain v1.x, create_agent returns a CompiledGraph (Runnable).
         """
-        # 1. Define the Prompt Template internally
-        # We must include "agent_scratchpad" for the tool calling agent to work
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", f"You are {name}. {system_prompt}"),
-            MessagesPlaceholder(variable_name="messages"),
-            ("placeholder", "{agent_scratchpad}"), 
-        ])
-
-        # 2. Construct the Agent
-        agent = create_tool_calling_agent(
+        # The v1 API simplifies everything into this single constructor
+        return create_agent(
             model=self.llm,
             tools=tools,
-            prompt=prompt
+            system_prompt=f"You are {name}. {system_prompt}"
         )
-
-        # 3. Create the Executor (The Runtime)
-        # verbose=True helps you see the "thinking" process in the console
-        return AgentExecutor(agent=agent, tools=tools, verbose=True)
 
     def create_agent_as_tool(self, name: str, system_prompt: str, tools: list, description: str):
         """
-        Wraps a sub-agent as a tool for the root agent.
+        Wraps a sub-agent as a tool.
         """
-        agent_executor = self.create_agent(name, system_prompt, tools)
+        agent_runner = self.create_agent(name, system_prompt, tools)
         
         def run_agent(query: str):
-            # The executor expects a dictionary with "messages"
+            # v1 Agents (Graph-based) expect a dict with "messages"
+            inputs = {"messages": [HumanMessage(content=query)]}
+            
             try:
-                # We wrap the string query in a HumanMessage
-                response = agent_executor.invoke({"messages": [HumanMessage(content=query)]})
-                
-                # IMPORTANT: AgentExecutor returns 'output', NOT 'messages'
-                return response.get("output", "No response generated.")
+                result = agent_runner.invoke(inputs)
+                # v1 Response Extraction:
+                # The result is the final state, so we get the last message's content
+                return result["messages"][-1].content
             except Exception as e:
-                return f"Error running {name}: {e}"
+                return f"Error executing {name}: {e}"
 
         return Tool(
             name=name,
