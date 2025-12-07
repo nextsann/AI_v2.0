@@ -4,7 +4,7 @@ from langchain_core.tools import Tool
 from langchain_core.messages import HumanMessage
 
 class AgentFactory:
-    def __init__(self, model_name="gemini-2.5-flash", temperature=0.7):
+    def __init__(self, model_name="meta-llama/llama-4-maverick-17b-128e-instruct", temperature=0.7):
         self.llm = ChatGroq(
         model="meta-llama/llama-4-maverick-17b-128e-instruct", 
         api_key=st.secrets["GROQ_API_KEY"],
