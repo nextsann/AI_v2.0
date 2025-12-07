@@ -80,7 +80,10 @@ def send_email(to: str, subject: str, body: str) -> str:
         
         sent = service.users().messages().send(userId='me', body={'raw': raw_message}).execute()
         return f"Email sent! ID: {sent['id']}"
-    except Exception as e: return f"Error sending email: {e}"
+    except Exception as e:
+        # --- ADD THIS DEBUG LINE ---
+        st.error(f"🚨 GMAIL ERROR: {e}")
+        return f"Error sending email: {e}"
 
 @tool
 def read_emails(max_results: int = 5) -> str:
