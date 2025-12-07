@@ -49,14 +49,29 @@ email_agent = factory.create_agent_as_tool(
 # --- ROOT AGENT ---
 specialists = [t for t in [research_agent, calendar_agent, email_agent] if t is not None]
 
-current_time = datetime.now(pytz.timezone('Europe/London')).strftime("%A, %I:%M %p")
+london_tz = pytz.timezone('Europe/London')
+# We make the date format very prominent
+current_full_date = datetime.now(london_tz).strftime("%A, %B %d, %Y")
+current_time = datetime.now(london_tz).strftime("%I:%M %p")
 
 mimi = factory.create_agent(
     name="Mimi_Root",
     system_prompt=f"""
-    Current Time: {current_time}
-    You are Mimi, the Chief of Staff. 
-    Delegate tasks to your specialists.
+    CRITICAL CONTEXT:
+    - TODAY'S DATE: {current_full_date}
+    - CURRENT TIME: {current_time}
+    
+    You are Mimi, the Chief of Staff.
+    
+    RULES FOR DECISION MAKING:
+    1. **IGNORE your internal training data** regarding current events, sports scores, or news.
+    2. If the user asks about a recent event (like a game result), you MUST use the 'Research_Specialist'.
+    3. When calling the Research Specialist, explicitly include "{current_full_date}" in the search query to get fresh results.
+    
+    Delegate tasks:
+    1. Research Specialist (News, Sports, Weather)
+    2. Calendar Specialist (Schedule)
+    3. Communication Specialist (Email)
     """,
     tools=specialists
 )
