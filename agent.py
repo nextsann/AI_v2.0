@@ -74,28 +74,41 @@ mimi_executor = factory.create_agent(
 )
 
 # --- 5. CHAT LOOP ---
+# --- 5. CHAT LOOP ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 for msg in st.session_state.messages:
-    # Filter out hidden "tool" messages from UI to keep it clean
     if isinstance(msg, (HumanMessage, AIMessage)):
         role = "user" if isinstance(msg, HumanMessage) else "assistant"
         st.chat_message(role).write(msg.content)
 
-if user_input := st.chat_input("Hello there"):
+if user_input := st.chat_input("Que pasa?"):
     st.chat_message("user").write(user_input)
     st.session_state.messages.append(HumanMessage(content=user_input))
 
     with st.chat_message("assistant"):
         with st.status("Thinking...", expanded=True) as status:
-            # We invoke Mimi. She might call other agents, which will log to console
             response = mimi_executor.invoke({"messages": st.session_state.messages})
             status.update(label="Complete", state="complete", expanded=False)
             
-        # New way: Grab the LAST message content from the list
-        final_answer = response["messages"][-1].content
+        # --- ROBUST CONTENT EXTRACTION ---
+        raw_content = response["messages"][-1].content
+        
+        # 1. If it's a simple string, just use it
+        if isinstance(raw_content, str):
+            final_answer = raw_content
+            
+        # 2. If it's a List (the "Gibberish" you saw), extract the text
+        elif isinstance(raw_content, list):
+            # Join all the 'text' parts together
+            final_answer = "".join([item.get('text', '') for item in raw_content if 'text' in item])
+            
+        # 3. Fallback just in case
+        else:
+            final_answer = str(raw_content)
         
         st.markdown(final_answer)
     
+    # Save the CLEAN text to history, not the raw object
     st.session_state.messages.append(AIMessage(content=final_answer))
