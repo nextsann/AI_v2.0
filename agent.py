@@ -8,7 +8,7 @@ from agent_factory import AgentFactory
 from tools_library import get_search_tool, calendar_tools, email_tools
 
 st.set_page_config(page_title="Mimi - Enterprise", page_icon="💃")
-st.title("Mimi (v1.1.2 Architecture)")
+st.title("Mimi (Context-Aware Edition)")
 
 if "GROQ_API_KEY" not in st.secrets:
     st.error("⚠️ Groq API Key missing.")
@@ -23,7 +23,7 @@ research_tool = get_search_tool()
 if research_tool:
     research_agent = factory.create_agent_as_tool(
         name="Research_Specialist",
-        system_prompt="Search Tavily and summarize findings.",
+        system_prompt="Search Tavily and summarize findings. Trust the query's specific details over your general knowledge.",
         tools=[research_tool],
         description="Search for news, facts, or web info."
     )
@@ -50,25 +50,28 @@ email_agent = factory.create_agent_as_tool(
 specialists = [t for t in [research_agent, calendar_agent, email_agent] if t is not None]
 
 london_tz = pytz.timezone('Europe/London')
-# We make the date format very prominent
 current_full_date = datetime.now(london_tz).strftime("%A, %B %d, %Y")
 current_time = datetime.now(london_tz).strftime("%I:%M %p")
 
+# We update the System Prompt to force "Query Expansion"
 mimi = factory.create_agent(
     name="Mimi_Root",
     system_prompt=f"""
-    CRITICAL CONTEXT:
-    - TODAY'S DATE: {current_full_date}
-    - CURRENT TIME: {current_time}
+    CONTEXT:
+    - Today is: {current_full_date}
+    - Time is: {current_time}
     
     You are Mimi, the Chief of Staff.
     
-    RULES FOR DECISION MAKING:
-    1. **IGNORE your internal training data** regarding current events, sports scores, or news.
-    2. If the user asks about a recent event (like a game result), you MUST use the 'Research_Specialist'.
-    3. When calling the Research Specialist, explicitly include "{current_full_date}" in the search query to get fresh results.
+    CRITICAL INSTRUCTION - QUERY REWRITING:
+    The specialists (Research, Calendar, Email) DO NOT have access to the chat history.
+    If the user asks a follow-up question like "When was that?" or "Who won?", you MUST rewrite the query to include the full context.
     
-    Delegate tasks:
+    Examples:
+    - User: "When was that?" (after discussing Liverpool vs Leeds) -> Tool Input: "Date of Liverpool vs Leeds match December 2025"
+    - User: "Send it to him" (after discussing Bob) -> Tool Input: "Send email to Bob..."
+    
+    Delegate tasks to your specialists:
     1. Research Specialist (News, Sports, Weather)
     2. Calendar Specialist (Schedule)
     3. Communication Specialist (Email)
@@ -90,12 +93,10 @@ if user_input := st.chat_input("How can I help?"):
     st.session_state.messages.append(HumanMessage(content=user_input))
 
     with st.chat_message("assistant"):
-        with st.status("Working...", expanded=True) as status:
-            # v1 Agents accept dictionary with 'messages' key
+        with st.status("Thinking...", expanded=True) as status:
             response_state = mimi.invoke({"messages": st.session_state.messages})
             status.update(label="Done", state="complete", expanded=False)
             
-        # CORRECT v1 EXTRACTION: Get text from the last message in the state
         final_answer = response_state["messages"][-1].content
         st.markdown(final_answer)
     
