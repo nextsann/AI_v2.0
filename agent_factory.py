@@ -1,45 +1,56 @@
-from langchain.agents import create_agent
+import streamlit as st
 from langchain_groq import ChatGroq
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import Tool
 from langchain_core.messages import HumanMessage
 
 class AgentFactory:
     def __init__(self, model_name="meta-llama/llama-4-maverick-17b-128e-instruct", temperature=0.7):
         self.llm = ChatGroq(
-        model="meta-llama/llama-4-maverick-17b-128e-instruct", 
-        api_key=st.secrets["GROQ_API_KEY"],
-        temperature=0.7,
-        max_tokens=4096 # Safety limit
-)
+            model=model_name, 
+            api_key=st.secrets["GROQ_API_KEY"],
+            temperature=temperature,
+            max_tokens=4096 
+        )
 
     def create_agent(self, name: str, system_prompt: str, tools: list):
         """
-        Creates a v1.x Agent (Replaces the old AgentExecutor pattern).
+        Creates a Tool Calling Agent (Best for Llama 3/4 on Groq).
         """
-        # In LangChain v1, create_agent handles the graph, tools, and execution loop automatically.
-        agent_runner = create_agent(
-            model=self.llm,
-            tools=tools,
-            system_prompt=f"You are the {name}. {system_prompt}",
+        # 1. Define the Prompt Template
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", f"You are the {name}. {system_prompt}"),
+            MessagesPlaceholder(variable_name="messages"),
+            ("placeholder", "{agent_scratchpad}"),
+        ])
+
+        # 2. Create the Agent
+        agent = create_tool_calling_agent(self.llm, tools, prompt)
+
+        # 3. Create the Executor (The Runtime)
+        agent_executor = AgentExecutor(
+            agent=agent, 
+            tools=tools, 
+            verbose=True,
+            handle_parsing_errors=True
         )
         
-        return agent_runner
+        return agent_executor
 
     def create_agent_as_tool(self, name: str, system_prompt: str, tools: list, description: str):
         """
         Wraps a sub-agent as a tool for the root agent.
         """
-        agent_runner = self.create_agent(name, system_prompt, tools)
+        agent_executor = self.create_agent(name, system_prompt, tools)
         
         def run_agent(query: str):
-            # v1 Agents expect a dictionary with "messages"
-            response = agent_runner.invoke({"messages": [HumanMessage(content=query)]})
+            # The executor expects "messages" list
+            response = agent_executor.invoke({"messages": [HumanMessage(content=query)]})
             
-            # The response format in v1 might differ slightly, usually returning the last message
-            # We extract the text content safely
-            if isinstance(response, dict) and "messages" in response:
-                return response["messages"][-1].content
-            return str(response)
+            # The executor returns a dict with inputs and outputs. 
+            # We want 'output' which is the final string answer.
+            return response.get("output", "No response generated.")
 
         return Tool(
             name=name,
