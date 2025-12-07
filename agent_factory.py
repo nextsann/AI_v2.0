@@ -4,7 +4,7 @@ from langchain_core.tools import Tool
 from langchain_core.messages import HumanMessage
 
 class AgentFactory:
-    def __init__(self, model_name="gemini-1.5-flash", temperature=0.7):
+    def __init__(self, model_name="gemini-2.5-flash", temperature=0.7):
         self.llm = ChatGoogleGenerativeAI(
             model=model_name,
             temperature=temperature
