@@ -41,7 +41,7 @@ calendar_agent = factory.create_agent_as_tool(
 # 3. Email
 email_agent = factory.create_agent_as_tool(
     name="Communication_Specialist",
-    system_prompt="Read unread emails or send new emails. Be concise.",
+    system_prompt="Read unread emails or send new emails. Be concise, but follow 100% the email body you were sent, do not change it!.",
     tools=email_tools,
     description="Read or send emails."
 )
