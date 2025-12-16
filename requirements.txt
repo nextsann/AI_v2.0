@@ -10,3 +10,4 @@ google-auth-oauthlib
 pytz
 supabase
 pypdf
+pydantic
