@@ -132,7 +132,7 @@ mimi = factory.create_agent(
     1. Research Specialist (News, Sports, Weather)
     2. Calendar Specialist (Schedule)
     3. Communication Specialist (Email)
-    4. Knowledge Specialist (Personal Info, PDFs, Docs)
+    4. Knowledge Specialist -> First stop for user preferences, internal docs, and context.
     """,
     tools=specialists
 )
