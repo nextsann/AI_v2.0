@@ -1,7 +1,7 @@
 import streamlit as st
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.tools import tool
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 import json
