@@ -94,8 +94,16 @@ email_agent = factory.create_agent_as_tool(
     description="Read or send emails."
 )
 
+#RAG
+knowledge_agent = factory.create_agent_as_tool(
+    name="Knowledge_Specialist",
+    system_prompt="Search the internal knowledge base (uploaded PDFs). Quote the document where possible.",
+    tools=rag_tools,
+    description="Use this ONLY when the user asks about uploaded documents, specific project specs, or internal files."
+)
+
 # --- ROOT AGENT ---
-specialists = [t for t in [research_agent, calendar_agent, email_agent] if t is not None]
+specialists = [t for t in [research_agent, calendar_agent, email_agent, knowledge_agent] if t is not None]
 
 london_tz = pytz.timezone('Europe/London')
 current_full_date = datetime.now(london_tz).strftime("%A, %B %d, %Y")
@@ -123,6 +131,7 @@ mimi = factory.create_agent(
     1. Research Specialist (News, Sports, Weather)
     2. Calendar Specialist (Schedule)
     3. Communication Specialist (Email)
+    4. Knowledge Specialist (Personal Info, PDFs, Docs)
     """,
     tools=specialists
 )
