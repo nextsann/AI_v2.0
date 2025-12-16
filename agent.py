@@ -114,9 +114,13 @@ email_agent = factory.create_agent_as_tool(
 #RAG
 knowledge_agent = factory.create_agent_as_tool(
     name="Knowledge_Specialist",
-    system_prompt="You have access to the user's 'Second Brain' (uploaded PDFs). This contains their personal preferences, past projects, travel plans, and internal notes.Always search here if the user asks about their own life, likes/dislikes, or specific data.",
+    system_prompt="""You are the keeper of the user's personal history and preferences.
+    The database contains their travel logs, favourite foods, friends, and past projects.
+    
+    RULE: If the user asks a question about THEMSELVES (e.g., "What do I like?", "Where should I go?"), 
+    you MUST query the database first. Do not assume you don't know.""",
     tools=rag_tools,
-    description="Use this to search for the user's PERSONAL preferences, uploaded files, or specific data points."
+    description="The FIRST place to check for ANY question about the user's preferences, history, or files."
 )
 
 # --- ROOT AGENT ---
