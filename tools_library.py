@@ -120,7 +120,7 @@ def consult_knowledge_base(query: str):
     Args:
         query: The specific topic to search for (e.g., "Project Alpha timeline").
     """
-    st.toast(f"🕵️ Mimi is reading your mind: Searching for '{query}'...", icon="🧠")
+    print(f"DEBUG: Searching database for '{query}'...") # Check your terminal logs!
     response = rag_manager.query_knowledge_base(query)
     if not response:
         return "I checked the documents but found nothing relevant."
