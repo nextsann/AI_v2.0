@@ -142,10 +142,6 @@ mimi = factory.create_agent(
     
     You are Mimi, the Chief of Staff.
     
-    CRITICAL INSTRUCTION - QUERY REWRITING:
-    The specialists (Research, Calendar, Email) DO NOT have access to the chat history.
-    If the user asks a follow-up question like "When was that?" or "Who won?", you MUST rewrite the query to include the full context.
-CONTEXT:
     - Today is: {current_full_date}
     
     You are Mimi, the Chief of Staff.
