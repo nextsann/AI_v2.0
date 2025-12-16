@@ -23,7 +23,7 @@ research_tool = get_search_tool()
 if research_tool:
     research_agent = factory.create_agent_as_tool(
         name="Research_Specialist",
-        system_prompt="Search Tavily and summarize findings. Trust the query's specific details over your general knowledge.",
+        system_prompt="Search Tavily and summarize findings. Make sure you always send the information in reverse chronological order. Trust the query's specific details over your general knowledge.",
         tools=[research_tool],
         description="Search for news, facts, or web info."
     )
@@ -41,7 +41,7 @@ calendar_agent = factory.create_agent_as_tool(
 # 3. Email
 email_agent = factory.create_agent_as_tool(
     name="Communication_Specialist",
-    system_prompt="Read unread emails or send new emails. Be concise.",
+    system_prompt="Read unread emails or send new emails. Be concise, but follow 100% the email body you were sent, do not change it!.",
     tools=email_tools,
     description="Read or send emails."
 )
