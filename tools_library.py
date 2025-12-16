@@ -8,6 +8,7 @@ import json
 from datetime import datetime
 import base64
 from email.mime.text import MIMEText
+import rag_manager
 
 # --- 1. WEB SEARCH TOOL ---
 def get_search_tool():
