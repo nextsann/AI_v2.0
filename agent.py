@@ -5,7 +5,7 @@ import pytz
 
 # Import modules
 from agent_factory import AgentFactory
-from tools_library import get_search_tool, calendar_tools, email_tools
+from tools_library import get_search_tool, calendar_tools, email_tools, rag_tools
 
 st.set_page_config(page_title="Mimi - Enterprise", page_icon="💃")
 st.title("Mimi (Context-Aware Edition)")
@@ -13,7 +13,55 @@ st.title("Mimi (Context-Aware Edition)")
 if "GROQ_API_KEY" not in st.secrets:
     st.error("⚠️ Groq API Key missing.")
     st.stop()
+
+#SIDEBAR
+with st.sidebar:
+    st.header("🧠 Knowledge Base")
+    # PDF Uploader
+    uploaded_file = st.file_uploader("Upload PDF (Internal Docs)", type=["pdf"])
+    if uploaded_file and st.button("Process PDF"):
+        with st.spinner("Ingesting document..."):
+            result = rag_manager.ingest_pdf(uploaded_file)
+            if "Success" in result:
+                st.success(result)
+            else:
+                st.error(result)
     
+    st.divider()
+    
+    st.header("🗄️ Chat History")
+    # New Chat Button
+    if st.button("➕ New Chat", use_container_width=True):
+        st.session_state.session_id = str(uuid.uuid4())
+        st.session_state.messages = []
+        st.rerun()
+    
+    # Load Past Sessions from Supabase
+    try:
+        sessions = db.get_all_sessions()
+        for s in sessions:
+            col1, col2 = st.columns([0.8, 0.2])
+            with col1:
+                if st.button(f"💬 {s['title']}", key=s['id'], use_container_width=True):
+                    st.session_state.session_id = s['id']
+                    # Load messages from DB -> Convert to LangChain objects
+                    raw_msgs = db.get_messages(s['id'])
+                    st.session_state.messages = [
+                        HumanMessage(content=m['content']) if m['role'] == 'user' 
+                        else AIMessage(content=m['content']) 
+                        for m in raw_msgs
+                    ]
+                    st.rerun()
+            with col2:
+                if st.button("🗑️", key=f"del_{s['id']}"):
+                    db.delete_session(s['id'])
+                    if st.session_state.session_id == s['id']:
+                        st.session_state.session_id = str(uuid.uuid4())
+                        st.session_state.messages = []
+                    st.rerun()
+    except Exception as e:
+        st.warning(f"Could not load history: {e}")
+
 # --- INITIALIZE FACTORY ---
 factory = AgentFactory()
 
