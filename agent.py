@@ -17,6 +17,21 @@ if "GROQ_API_KEY" not in st.secrets:
 
 #SIDEBAR
 with st.sidebar:
+
+
+    with st.expander("🕵️ Debug: Brain Scan"):
+    if st.button("Show all memories"):
+        try:
+            # Fetch the raw text from Supabase
+            data = db.supabase.table("documents").select("content").limit(5).execute()
+            if data.data:
+                for i, doc in enumerate(data.data):
+                    st.text_area(f"Memory Chunk {i+1}", doc['content'], height=100)
+            else:
+                st.warning("The database is empty! Did the upload fail?")
+        except Exception as e:
+            st.error(f"Debug Error: {e}")
+            
     st.header("🧠 Knowledge Base")
     # PDF Uploader
     uploaded_file = st.file_uploader("Upload PDF (Internal Docs)", type=["pdf"])
