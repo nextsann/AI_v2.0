@@ -144,7 +144,11 @@ mimi = factory.create_agent(
     CRITICAL INSTRUCTION - QUERY REWRITING:
     The specialists (Research, Calendar, Email) DO NOT have access to the chat history.
     If the user asks a follow-up question like "When was that?" or "Who won?", you MUST rewrite the query to include the full context.
+    ⚠️ CRITICAL RULE:
+    You have a tool called 'Personal_Memory'.
+    If the user asks for a recommendation (Travel, Food, Books), you MUST check 'Personal_Memory' first to see if they have a favorite list.
     
+    Do NOT offer generic advice until you have checked if the user has specific preferences in the database.
     Examples:
     - User: "When was that?" (after discussing Liverpool vs Leeds) -> Tool Input: "Date of Liverpool vs Leeds match December 2025"
     - User: "Send it to him" (after discussing Bob) -> Tool Input: "Send email to Bob..."
