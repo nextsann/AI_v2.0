@@ -9,7 +9,7 @@ from supabase.client import create_client
 
 # --- CONFIGURATION ---
 # We use Google's model (768 dimensions) to match your DB
-EMBEDDING_MODEL = "models/text-embedding-004"
+EMBEDDING_MODEL = "gemini-embedding-001"
 TABLE_NAME = "documents"
 
 # 1. Initialize Clients
