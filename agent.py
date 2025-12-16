@@ -98,9 +98,9 @@ email_agent = factory.create_agent_as_tool(
 #RAG
 knowledge_agent = factory.create_agent_as_tool(
     name="Knowledge_Specialist",
-    system_prompt="Search the internal knowledge base (uploaded PDFs). Quote the document where possible.",
+    system_prompt="You have access to the user's 'Second Brain' (uploaded PDFs). This contains their personal preferences, past projects, travel plans, and internal notes.Always search here if the user asks about their own life, likes/dislikes, or specific data.",
     tools=rag_tools,
-    description="Use this ONLY when the user asks about uploaded documents, specific project specs, or internal files."
+    description="Use this to search for the user's PERSONAL preferences, uploaded files, or specific data points."
 )
 
 # --- ROOT AGENT ---
