@@ -111,5 +111,19 @@ def read_emails(max_results: int = 5) -> str:
         return "\n---\n".join(summaries)
     except Exception as e: return f"Error reading emails: {e}"
 
+#RAG Retrieval
+@tool
+def consult_knowledge_base(query: str):
+    """
+    Use this tool to search uploaded documents, PDFs, or internal project details.
+    Args:
+        query: The specific topic to search for (e.g., "Project Alpha timeline").
+    """
+    response = rag_manager.query_knowledge_base(query)
+    if not response:
+        return "I checked the documents but found nothing relevant."
+    return f"Here is what I found in the internal docs:\n{response}"
+
 calendar_tools = [list_upcoming_events, create_calendar_event]
 email_tools = [send_email, read_emails]
+rag_tools = [consult_knowledge_base]
