@@ -10,6 +10,7 @@ import base64
 from email.mime.text import MIMEText
 import rag_manager
 
+
 # --- 1. WEB SEARCH TOOL ---
 def get_search_tool():
     if "TAVILY_API_KEY" not in st.secrets: return None
@@ -119,6 +120,7 @@ def consult_knowledge_base(query: str):
     Args:
         query: The specific topic to search for (e.g., "Project Alpha timeline").
     """
+    st.toast(f"🕵️ Mimi is reading your mind: Searching for '{query}'...", icon="🧠")
     response = rag_manager.query_knowledge_base(query)
     if not response:
         return "I checked the documents but found nothing relevant."
