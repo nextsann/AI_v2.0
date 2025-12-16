@@ -4,6 +4,7 @@ from datetime import datetime
 import pytz
 import rag_manager
 import db
+import uuid
 
 # Import modules
 from agent_factory import AgentFactory
