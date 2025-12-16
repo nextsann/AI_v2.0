@@ -158,17 +158,13 @@ CONTEXT:
     2. If the user asks for "Destinations" or "Preferences", CALL 'consult_knowledge_base'.
     
     Do not say "I don't have access." You DO have access. Use the tool!
-    Examples:
-    - User: "When was that?" (after discussing Liverpool vs Leeds) -> Tool Input: "Date of Liverpool vs Leeds match December 2025"
-    - User: "Send it to him" (after discussing Bob) -> Tool Input: "Send email to Bob..."
     
     Delegate tasks to your specialists:
     1. Research Specialist (News, Sports, Weather)
     2. Calendar Specialist (Schedule)
     3. Communication Specialist (Email)
-    4. Knowledge Specialist -> First stop for user preferences, internal docs, and context.
     """,
-    tools=specialists
+    tools=all_tools
 )
 
 # --- CHAT LOOP ---
