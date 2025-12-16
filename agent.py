@@ -2,7 +2,7 @@ import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
 from datetime import datetime
 import pytz
-import rag_mangager
+import rag_manager
 
 # Import modules
 from agent_factory import AgentFactory
