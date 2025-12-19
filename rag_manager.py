@@ -8,27 +8,26 @@ from langchain_community.vectorstores import SupabaseVectorStore
 from supabase.client import create_client
 
 # --- CONFIGURATION ---
-# We use Google's model (768 dimensions) to match your DB
-EMBEDDING_MODEL = "gemini-embedding-001"
-TABLE_NAME = "documents"
+# Using the model you have available (3072 dimensions)
+EMBEDDING_MODEL = "models/gemini-embedding-001" 
 
 # 1. Initialize Clients
-# Make sure GEMINI_API_KEY and SUPABASE keys are in secrets.toml
 embeddings = GoogleGenerativeAIEmbeddings(
     model=EMBEDDING_MODEL,
     google_api_key=st.secrets["GEMINI_API_KEY"]
 )
 
+# This is the raw client we will use to bypass the error
 supabase_client = create_client(
     st.secrets["SUPABASE_URL"],
     st.secrets["SUPABASE_KEY"]
 )
 
-# Connect LangChain to Supabase
+# Keep this for ingestion (since that part works)
 vector_store = SupabaseVectorStore(
     client=supabase_client,
     embedding=embeddings,
-    table_name=TABLE_NAME,
+    table_name="documents",
     query_name="match_documents"
 )
 
@@ -36,29 +35,24 @@ vector_store = SupabaseVectorStore(
 
 def ingest_pdf(uploaded_file):
     """
-    Reads a PDF, splits it into chunks, and saves to Supabase.
+    Ingests PDF. (This part was working fine, so we keep using LangChain here)
     """
     try:
-        # Step A: Save temp file (PyPDF needs a file path)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
             tmp_file.write(uploaded_file.getvalue())
             tmp_path = tmp_file.name
 
-        # Step B: Load and Split
         loader = PyPDFLoader(tmp_path)
         docs = loader.load()
         
-        # Splitter: Cuts text into manageable pieces
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,  # 1000 chars is good for Google
+            chunk_size=1000,
             chunk_overlap=200 
         )
         splits = text_splitter.split_documents(docs)
 
-        # Step C: Upload to Vector DB
         vector_store.add_documents(splits)
         
-        # Cleanup
         os.remove(tmp_path)
         return f"✅ Success! Added {len(splits)} chunks to memory."
         
@@ -67,14 +61,31 @@ def ingest_pdf(uploaded_file):
 
 def query_knowledge_base(query: str):
     """
-    Searches Supabase for relevant chunks.
+    MANUAL OVERRIDE:
+    We call Supabase directly to avoid the 'SyncRPCFilterRequestBuilder' error.
     """
     try:
-        results = vector_store.similarity_search(query, k=4)
-        if not results:
-            return None
-        
-        # Combine the content
-        return "\n\n".join([doc.page_content for doc in results])
+        # 1. Convert text query to vector numbers (Using Google)
+        query_vector = embeddings.embed_query(query)
+
+        # 2. Call the Database Function directly (Bypassing LangChain wrapper)
+        # This uses the raw Supabase client, which doesn't have the bug.
+        response = supabase_client.rpc(
+            "match_documents",
+            {
+                "query_embedding": query_vector,
+                "match_threshold": 0.0, # Zero threshold = Find anything (Good for debugging)
+                "match_count": 5
+            }
+        ).execute()
+
+        # 3. Extract the text
+        if not response.data:
+            return "No relevant information found in the database."
+            
+        # Combine the "content" field from the top results
+        results_text = "\n\n---\n\n".join([item['content'] for item in response.data])
+        return results_text
+
     except Exception as e:
-        return f"Error searching knowledge base: {str(e)}"
+        return f"Database Search Error: {str(e)}"
